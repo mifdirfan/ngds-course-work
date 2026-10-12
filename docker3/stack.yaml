@@ -1,0 +1,44 @@
+services:
+  web:
+    image: 10.0.2.10:5000/ngds-swarm:v1
+    ports:
+      - target: 8000
+        published: 8000
+        protocol: tcp
+        mode: ingress
+    environment:
+      NODE_NAME: "{{.Node.Hostname}}"
+      DB_HOST: db
+      DB_NAME: guestbook
+      DB_USER: ngds
+      DB_PASSWORD: ngds-pass
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: any
+    networks:
+      - ngds-overlay
+
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: root-pass
+      MYSQL_DATABASE: guestbook
+      MYSQL_USER: ngds
+      MYSQL_PASSWORD: ngds-pass
+    volumes:
+      - db-data:/var/lib/mysql
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - ngds-overlay
+
+networks:
+  ngds-overlay:
+    driver: overlay
+
+volumes:
+  db-data:
